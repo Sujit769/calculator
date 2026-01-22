@@ -337,3 +337,63 @@ class Calculator {
 document.addEventListener('DOMContentLoaded', () => {
     new Calculator();
 });
+
+// Dark Mode Toggle Feature
+class DarkModeToggle {
+    constructor() {
+        this.isDarkMode = localStorage.getItem('darkMode') === 'true';
+        this.init();
+    }
+
+    init() {
+        // Apply saved preference
+        if (this.isDarkMode) {
+            document.body.classList.add('dark-mode');
+        }
+
+        // Create toggle button
+        this.createToggleButton();
+    }
+
+    createToggleButton() {
+        const button = document.createElement('button');
+        button.id = 'dark-mode-toggle';
+        button.innerHTML = this.isDarkMode ? '☀️' : '🌙';
+        button.title = 'Toggle Dark Mode';
+        button.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            font-size: 20px;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        `;
+
+        button.addEventListener('click', () => this.toggle());
+        button.addEventListener('mouseenter', () => button.style.transform = 'scale(1.1)');
+        button.addEventListener('mouseleave', () => button.style.transform = 'scale(1)');
+
+        document.body.appendChild(button);
+    }
+
+    toggle() {
+        this.isDarkMode = !this.isDarkMode;
+        document.body.classList.toggle('dark-mode');
+        localStorage.setItem('darkMode', this.isDarkMode);
+
+        const button = document.getElementById('dark-mode-toggle');
+        button.innerHTML = this.isDarkMode ? '☀️' : '🌙';
+    }
+}
+
+// Initialize dark mode toggle
+document.addEventListener('DOMContentLoaded', () => {
+    new DarkModeToggle();
+});
