@@ -2,11 +2,15 @@ class Calculator {
     constructor() {
         this.displayResult = document.getElementById('result');
         this.displayExpression = document.getElementById('expression');
+        this.historyList = document.getElementById('history-list');
+        this.historyToggle = document.getElementById('history-toggle');
+        this.historyClearButton = document.getElementById('history-clear');
         this.currentValue = '0';
         this.previousValue = '';
         this.operator = null;
         this.waitingForOperand = false;
         this.lastResult = null;
+        this.history = this.loadHistory();
 
         this.init();
     }
@@ -17,6 +21,22 @@ class Calculator {
             key.addEventListener('click', (e) => this.handleClick(e));
             key.addEventListener('click', (e) => this.createRipple(e));
         });
+
+        if (this.historyToggle) {
+            this.historyToggle.addEventListener('click', (e) => {
+                if (e.target.classList.contains('history-clear')) return;
+                this.toggleHistory();
+            });
+        }
+
+        if (this.historyClearButton) {
+            this.historyClearButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.clearHistory();
+            });
+        }
+
+        this.renderHistory();
 
         // Keyboard support
         document.addEventListener('keydown', (e) => this.handleKeyboard(e));
@@ -205,12 +225,15 @@ class Calculator {
         result = this.formatResult(result);
 
         if (clearOperator) {
+            const expression = `${this.formatNumber(prev)} ${this.operator} ${this.formatNumber(current)} =`;
             this.displayExpression.textContent = `${this.formatNumber(prev)} ${this.operator} ${this.formatNumber(current)} =`;
             this.operator = null;
             this.previousValue = '';
 
             // Remove active class from operators
             document.querySelectorAll('.key.operator').forEach(op => op.classList.remove('active'));
+
+            this.addToHistory(expression, result);
         }
 
         this.currentValue = result.toString();
@@ -330,6 +353,79 @@ class Calculator {
 
     updateExpression() {
         this.displayExpression.textContent = `${this.formatNumber(this.previousValue)} ${this.operator}`;
+    }
+
+    loadHistory() {
+        try {
+            const raw = localStorage.getItem('calcHistory');
+            const parsed = raw ? JSON.parse(raw) : [];
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    saveHistory() {
+        localStorage.setItem('calcHistory', JSON.stringify(this.history));
+    }
+
+    addToHistory(expression, result) {
+        if (!this.historyList) return;
+
+        const entry = {
+            expression,
+            result: this.formatNumber(result)
+        };
+
+        this.history.unshift(entry);
+
+        if (this.history.length > 20) {
+            this.history = this.history.slice(0, 20);
+        }
+
+        this.saveHistory();
+        this.renderHistory();
+    }
+
+    clearHistory() {
+        this.history = [];
+        this.saveHistory();
+        this.renderHistory();
+    }
+
+    toggleHistory() {
+        if (!this.historyToggle) return;
+        this.historyToggle.classList.toggle('expanded');
+    }
+
+    renderHistory() {
+        if (!this.historyList) return;
+
+        this.historyList.innerHTML = '';
+
+        if (this.history.length === 0) {
+            const emptyItem = document.createElement('li');
+            emptyItem.className = 'history-empty';
+            emptyItem.textContent = 'No history yet';
+            this.historyList.appendChild(emptyItem);
+            return;
+        }
+
+        this.history.forEach(entry => {
+            const item = document.createElement('li');
+            item.className = 'history-item';
+
+            const expression = document.createElement('div');
+            expression.className = 'history-expression';
+            expression.textContent = entry.expression;
+
+            const result = document.createElement('div');
+            result.textContent = entry.result;
+
+            item.appendChild(expression);
+            item.appendChild(result);
+            this.historyList.appendChild(item);
+        });
     }
 }
 
